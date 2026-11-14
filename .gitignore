@@ -1,6 +1,5 @@
 venv/
-.vscode/
 db.sqlite3
 .idea/
 __pycache__/
-.django-stub-gen/
+django-stub-gen/
