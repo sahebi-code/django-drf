@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.conf import settings
 from uuid import uuid4
 
 
@@ -40,14 +41,22 @@ class Product(models.Model):
 
 
 class Customer(models.Model):
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    email = models.EmailField()
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     phone_number = models.CharField(max_length=255)
     birth_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.user.first_name} {self.user.last_name}"
+
+    # @property
+    # def full_name(self):
+    #     return f"{self.user.first_name} {self.user.last_name}"
+
+    class Meta:
+        permissions = [
+            ("send_private_email", "Can send private email to user by the button")
+        ]
 
 
 class Address(models.Model):
@@ -90,7 +99,8 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="items")
+    order = models.ForeignKey(
+        Order, on_delete=models.PROTECT, related_name="items")
     product = models.ForeignKey(
         Product, on_delete=models.PROTECT, related_name="order_items"
     )
@@ -141,7 +151,8 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
+    cart = models.ForeignKey(
+        Cart, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="cart_items"
     )
