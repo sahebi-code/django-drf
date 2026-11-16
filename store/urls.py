@@ -7,15 +7,13 @@ router = routers.DefaultRouter()
 router.register("products", views.ProductViewSet, basename="product")
 router.register("categories", views.CategoryViewSet, basename="category")
 router.register("carts", views.CartViewSet)
+router.register("customers", views.CustomerViewSet)
 
-products_router = routers.NestedDefaultRouter(
-    router, "products", lookup="product")
-products_router.register(
-    "comments", views.CommentViewSet, basename="product-comments")
+
+products_router = routers.NestedDefaultRouter(router, "products", lookup="product")
+products_router.register("comments", views.CommentViewSet, basename="product-comments")
 # /products/553:product_pk/comments/8:pk
-cart_items_router = routers.NestedDefaultRouter(
-    router, "carts", lookup="cart")
-cart_items_router.register(
-    "items", views.CartItemViewSet, basename="cart_items")
+cart_items_router = routers.NestedDefaultRouter(router, "carts", lookup="cart")
+cart_items_router.register("items", views.CartItemViewSet, basename="cart_items")
 
 urlpatterns = router.urls + products_router.urls + cart_items_router.urls
