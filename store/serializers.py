@@ -1,9 +1,10 @@
 from dataclasses import field
 from decimal import Decimal
+from xml.dom import ValidationErr
 from django.utils.text import slugify
 from rest_framework import serializers
 
-from .models import CartItem, Category, Customer, Product, Comment, Cart
+from .models import CartItem, Category, Customer, Order, Product, Comment, Cart, OrderItem
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -126,3 +127,71 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = ["id", "user", "birth_date"]
         read_only_fields = ["user"]
+           
+           
+class OrderCustomerSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=255, source="user.first_name")
+    last_name = serializers.CharField(max_length=255, source="user.last_name")
+    email = serializers.EmailField(source="user.email")
+    class Meta:
+        model = Customer
+        fields = ["id", "first_name", "last_name", "email"]
+          
+        
+class OrderItemProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ["id", "name", "unit_price"]
+            
+            
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = OrderItemProductSerializer()
+    
+    class Meta:
+        model = OrderItem
+        fields = ["id", "product", "quantity", "unit_price"]
+            
+
+class OrderForUserSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+        
+    class Meta:
+        model = Order
+        fields = ["id", "customer", "status", "datetime_created", "items"]
+        
+      
+class OrderForAdminSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+    customer = OrderCustomerSerializer()
+    
+    class Meta:
+        model = Order
+        fields = ["id", "customer", "status", "datetime_created", "items"]
+        
+        
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ["status"]
+
+class OrderCreateSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField()
+    
+    def validate_cart_id(self, cart_id):
+        # try:
+        #     if Cart.objects.prefetch_related("items").get(id=cart_id).items.count() == 0:
+        #         raise serializers.ValidationError("Your cart is empty. Please add some products first.")
+        # except Cart.DoesNotExist:
+        #     raise serializers.ValidationError("There is no cart with this cart id!")
+            
+        if not Cart.objects.filter(id=cart_id).exists():
+            raise serializers.ValidationError("There is no cart with this cart id!")
+        
+        if Cart.objects.filter(cart_id=cart_id).count() == 0:
+            raise serializers.ValidationError("Your cart is empty. Please add some products first.")
+        
+        return cart_id
+        
+            
+            
+            
